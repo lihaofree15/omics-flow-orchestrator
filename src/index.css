@@ -2,59 +2,59 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 多组学分析平台设计系统 - 深色主题生物信息学风格 */
+/* 多组学分析平台设计系统 - 明亮主题生物信息学风格 */
 
 @layer base {
   :root {
-    /* 深色主题基础色彩 */
-    --background: 240 10% 8%;           /* 深色底色 #1E1E2E */
-    --foreground: 0 0% 98%;             /* 主要文本 */
+    /* 明亮主题基础色彩 */
+    --background: 0 0% 98%;              /* 明亮底色 #FAFAFA */
+    --foreground: 240 10% 15%;           /* 主要文本 */
 
-    --card: 240 10% 12%;                /* 卡片背景 */
-    --card-foreground: 0 0% 95%;        /* 卡片文本 */
+    --card: 0 0% 100%;                   /* 卡片背景 */
+    --card-foreground: 240 10% 15%;      /* 卡片文本 */
 
-    --popover: 240 10% 10%;             /* 弹窗背景 */
-    --popover-foreground: 0 0% 98%;     /* 弹窗文本 */
+    --popover: 0 0% 100%;                /* 弹窗背景 */
+    --popover-foreground: 240 10% 15%;   /* 弹窗文本 */
 
-    /* 生物信息学主题色 - 青蓝色系 */
-    --primary: 195 100% 50%;            /* 科技蓝 #00BFFF */
-    --primary-foreground: 240 10% 8%;   /* 主要按钮文本 */
-    --primary-glow: 195 100% 65%;       /* 发光效果 */
+    /* 生物信息学主题色 - 清新蓝绿色系 */
+    --primary: 195 100% 40%;             /* 科技蓝 #0099CC */
+    --primary-foreground: 0 0% 100%;     /* 主要按钮文本 */
+    --primary-glow: 195 100% 50%;        /* 发光效果 */
 
-    --secondary: 240 8% 18%;            /* 次要元素背景 */
-    --secondary-foreground: 0 0% 90%;   /* 次要元素文本 */
+    --secondary: 210 20% 94%;            /* 次要元素背景 */
+    --secondary-foreground: 240 10% 15%; /* 次要元素文本 */
 
-    --muted: 240 5% 15%;                /* 静默背景 */
-    --muted-foreground: 240 5% 65%;     /* 静默文本 */
+    --muted: 210 20% 96%;                /* 静默背景 */
+    --muted-foreground: 240 5% 45%;      /* 静默文本 */
 
-    --accent: 140 60% 50%;              /* 强调色 - 生物绿 */
-    --accent-foreground: 240 10% 8%;    /* 强调文本 */
+    --accent: 160 80% 45%;               /* 强调色 - 生物绿 */
+    --accent-foreground: 0 0% 100%;      /* 强调文本 */
 
     /* 状态色彩 */
-    --success: 120 60% 50%;             /* 成功绿 */
-    --warning: 45 100% 55%;             /* 警告黄 */
-    --error: 0 84% 60%;                 /* 错误红 */
-    --info: 210 100% 60%;               /* 信息蓝 */
+    --success: 140 70% 45%;              /* 成功绿 */
+    --warning: 35 100% 50%;              /* 警告橙 */
+    --error: 0 70% 55%;                  /* 错误红 */
+    --info: 210 100% 55%;                /* 信息蓝 */
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 240 6% 20%;               /* 边框色 */
-    --input: 240 6% 16%;                /* 输入框背景 */
-    --ring: 195 100% 50%;               /* 焦点环 */
+    --border: 210 20% 88%;               /* 边框色 */
+    --input: 210 20% 94%;                /* 输入框背景 */
+    --ring: 195 100% 40%;                /* 焦点环 */
 
     /* 渐变色 */
-    --gradient-primary: linear-gradient(135deg, hsl(195 100% 50%), hsl(195 100% 65%));
-    --gradient-success: linear-gradient(135deg, hsl(120 60% 50%), hsl(140 60% 50%));
-    --gradient-warning: linear-gradient(135deg, hsl(45 100% 55%), hsl(35 100% 60%));
-    --gradient-error: linear-gradient(135deg, hsl(0 84% 60%), hsl(10 84% 65%));
+    --gradient-primary: linear-gradient(135deg, hsl(195 100% 40%), hsl(195 100% 50%));
+    --gradient-success: linear-gradient(135deg, hsl(140 70% 45%), hsl(160 80% 45%));
+    --gradient-warning: linear-gradient(135deg, hsl(35 100% 50%), hsl(25 100% 55%));
+    --gradient-error: linear-gradient(135deg, hsl(0 70% 55%), hsl(10 70% 60%));
 
     /* 阴影效果 */
-    --shadow-card: 0 4px 20px hsl(240 10% 4% / 0.4);
-    --shadow-glow: 0 0 30px hsl(195 100% 50% / 0.3);
-    --shadow-success: 0 0 20px hsl(120 60% 50% / 0.4);
-    --shadow-warning: 0 0 20px hsl(45 100% 55% / 0.4);
-    --shadow-error: 0 0 20px hsl(0 84% 60% / 0.4);
+    --shadow-card: 0 2px 10px hsl(210 20% 80% / 0.3);
+    --shadow-glow: 0 0 20px hsl(195 100% 40% / 0.2);
+    --shadow-success: 0 0 15px hsl(140 70% 45% / 0.3);
+    --shadow-warning: 0 0 15px hsl(35 100% 50% / 0.3);
+    --shadow-error: 0 0 15px hsl(0 70% 55% / 0.3);
 
     /* 动画 */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -62,21 +62,14 @@
 
     --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 98%;
-
+    --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-primary: 195 100% 40%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 20% 96%;
+    --sidebar-accent-foreground: 240 10% 15%;
+    --sidebar-border: 210 20% 88%;
+    --sidebar-ring: 195 100% 40%;
   }
 
   .dark {
