@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
 import ProjectManagement from "./pages/ProjectManagement";
+import ProjectDetail from "./pages/ProjectDetail";
 import DataManagement from "./pages/DataManagement";
 import TranscriptomeAnalysis from "./pages/TranscriptomeAnalysis";
 import SingleCellAnalysis from "./pages/SingleCellAnalysis";
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
             <Route path="projects" element={<ProjectManagement />} />
+            <Route path="projects/:projectId" element={<ProjectDetail />} />
             <Route path="data-management" element={<DataManagement />} />
             <Route path="workflows/transcriptome" element={<TranscriptomeAnalysis />} />
             <Route path="workflows/single-cell" element={<SingleCellAnalysis />} />
