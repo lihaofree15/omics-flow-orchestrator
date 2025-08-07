@@ -1,0 +1,172 @@
+# Differential Expression Analysis Rules
+# Based on RASflow differential expression guidelines
+
+# DESeq2 Differential Expression Analysis
+rule deseq2_analysis:
+    input:
+        counts="results/quantification/gene_counts.txt",
+        metadata="config/metadata.tsv"
+    output:
+        results="results/differential_expression/deseq2/differential_expression_results.csv",
+        normalized_counts="results/differential_expression/deseq2/normalized_counts.csv",
+        rlog_counts="results/differential_expression/deseq2/rlog_transformed_counts.csv",
+        plots_dir=directory("results/differential_expression/deseq2/plots")
+    params:
+        design_formula="~ condition",
+        contrast="condition,treatment,control",
+        alpha=0.05,
+        lfc_threshold=1
+    script:
+        "scripts/deseq2_analysis.R"
+
+# EdgeR Differential Expression Analysis
+rule edger_analysis:
+    input:
+        counts="results/quantification/gene_counts.txt",
+        metadata="config/metadata.tsv"
+    output:
+        results="results/differential_expression/edger/differential_expression_results.csv",
+        normalized_counts="results/differential_expression/edger/normalized_counts.csv",
+        plots_dir=directory("results/differential_expression/edger/plots")
+    params:
+        design_formula="~ condition",
+        contrast="treatment-control",
+        fdr_threshold=0.05,
+        lfc_threshold=1
+    script:
+        "scripts/edger_analysis.R"
+
+# Limma-voom Analysis
+rule limma_voom_analysis:
+    input:
+        counts="results/quantification/gene_counts.txt",
+        metadata="config/metadata.tsv"
+    output:
+        results="results/differential_expression/limma_voom/differential_expression_results.csv",
+        normalized_counts="results/differential_expression/limma_voom/normalized_counts.csv",
+        plots_dir=directory("results/differential_expression/limma_voom/plots")
+    params:
+        design_formula="~ condition",
+        contrast="treatment-control",
+        adj_p_threshold=0.05,
+        lfc_threshold=1
+    script:
+        "scripts/limma_voom_analysis.R"
+
+# Gene Set Enrichment Analysis (GSEA)
+rule gsea_analysis:
+    input:
+        results="results/differential_expression/deseq2/differential_expression_results.csv"
+    output:
+        gsea_results="results/enrichment/gsea/gsea_results.csv",
+        plots_dir=directory("results/enrichment/gsea/plots")
+    params:
+        organism="human",  # human, mouse, rat, etc.
+        gene_sets="hallmark",  # hallmark, kegg, go_bp, go_cc, go_mf
+        min_size=15,
+        max_size=500
+    script:
+        "scripts/gsea_analysis.R"
+
+# Gene Ontology (GO) Enrichment Analysis
+rule go_enrichment:
+    input:
+        results="results/differential_expression/deseq2/differential_expression_results.csv"
+    output:
+        go_results="results/enrichment/go/go_enrichment_results.csv",
+        plots_dir=directory("results/enrichment/go/plots")
+    params:
+        organism="org.Hs.eg.db",  # org.Hs.eg.db, org.Mm.eg.db, org.Rn.eg.db
+        ontology="ALL",  # BP, CC, MF, ALL
+        p_adjust_method="BH",
+        p_cutoff=0.05,
+        q_cutoff=0.2
+    script:
+        "scripts/go_enrichment.R"
+
+# KEGG Pathway Enrichment Analysis
+rule kegg_enrichment:
+    input:
+        results="results/differential_expression/deseq2/differential_expression_results.csv"
+    output:
+        kegg_results="results/enrichment/kegg/kegg_enrichment_results.csv",
+        plots_dir=directory("results/enrichment/kegg/plots")
+    params:
+        organism="hsa",  # hsa (human), mmu (mouse), rno (rat)
+        p_adjust_method="BH",
+        p_cutoff=0.05,
+        q_cutoff=0.2
+    script:
+        "scripts/kegg_enrichment.R"
+
+# Volcano Plot Generation
+rule volcano_plots:
+    input:
+        deseq2="results/differential_expression/deseq2/differential_expression_results.csv",
+        edger="results/differential_expression/edger/differential_expression_results.csv",
+        limma="results/differential_expression/limma_voom/differential_expression_results.csv"
+    output:
+        plots_dir=directory("results/plots/volcano_plots")
+    params:
+        p_threshold=0.05,
+        lfc_threshold=1
+    script:
+        "scripts/volcano_plots.R"
+
+# Heatmap Generation
+rule heatmaps:
+    input:
+        normalized_counts="results/differential_expression/deseq2/normalized_counts.csv",
+        metadata="config/metadata.tsv",
+        de_results="results/differential_expression/deseq2/differential_expression_results.csv"
+    output:
+        plots_dir=directory("results/plots/heatmaps")
+    params:
+        top_genes=50,
+        clustering_method="ward.D2",
+        annotation_columns=["condition", "batch"]
+    script:
+        "scripts/heatmaps.R"
+
+# PCA Analysis
+rule pca_analysis:
+    input:
+        rlog_counts="results/differential_expression/deseq2/rlog_transformed_counts.csv",
+        metadata="config/metadata.tsv"
+    output:
+        plots_dir=directory("results/plots/pca")
+    params:
+        color_by="condition",
+        shape_by="batch"
+    script:
+        "scripts/pca_analysis.R"
+
+# MA Plot Generation
+rule ma_plots:
+    input:
+        results="results/differential_expression/deseq2/differential_expression_results.csv"
+    output:
+        plots_dir=directory("results/plots/ma_plots")
+    params:
+        alpha=0.05,
+        lfc_threshold=1
+    script:
+        "scripts/ma_plots.R"
+
+# Summary Report Generation
+rule summary_report:
+    input:
+        deseq2="results/differential_expression/deseq2/differential_expression_results.csv",
+        edger="results/differential_expression/edger/differential_expression_results.csv",
+        limma="results/differential_expression/limma_voom/differential_expression_results.csv",
+        gsea="results/enrichment/gsea/gsea_results.csv",
+        go="results/enrichment/go/go_enrichment_results.csv",
+        kegg="results/enrichment/kegg/kegg_enrichment_results.csv",
+        metadata="config/metadata.tsv"
+    output:
+        report="results/reports/differential_expression_summary_report.html"
+    params:
+        title="Differential Expression Analysis Report",
+        author="Bioinformatics Pipeline"
+    script:
+        "scripts/summary_report.Rmd"

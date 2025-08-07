@@ -1,0 +1,253 @@
+# Variant Calling Rules for Genome Sequencing
+# Based on GATK Best Practices
+
+# Base Quality Score Recalibration (BQSR) - Step 1
+rule gatk_base_recalibrator:
+    input:
+        bam="results/alignment/{sample}.marked_duplicates.bam",
+        ref="reference/genome.fa",
+        known_sites="reference/known_variants.vcf.gz"
+    output:
+        recal_table="results/variant_calling/bqsr/{sample}_recal_data.table"
+    container:
+        "broadinstitute/gatk:4.2.6.1"
+    shell:
+        """
+        gatk BaseRecalibrator \
+            -I {input.bam} \
+            -R {input.ref} \
+            --known-sites {input.known_sites} \
+            -O {output.recal_table}
+        """
+
+# Apply BQSR - Step 2
+rule gatk_apply_bqsr:
+    input:
+        bam="results/alignment/{sample}.marked_duplicates.bam",
+        ref="reference/genome.fa",
+        recal_table="results/variant_calling/bqsr/{sample}_recal_data.table"
+    output:
+        bam="results/variant_calling/bqsr/{sample}.recalibrated.bam"
+    container:
+        "broadinstitute/gatk:4.2.6.1"
+    shell:
+        """
+        gatk ApplyBQSR \
+            -I {input.bam} \
+            -R {input.ref} \
+            --bqsr-recal-file {input.recal_table} \
+            -O {output.bam}
+        """
+
+# HaplotypeCaller for SNPs and Indels
+rule gatk_haplotype_caller:
+    input:
+        bam="results/variant_calling/bqsr/{sample}.recalibrated.bam",
+        ref="reference/genome.fa"
+    output:
+        gvcf="results/variant_calling/gvcf/{sample}.g.vcf.gz"
+    params:
+        intervals="reference/target_intervals.bed"  # Optional: for targeted sequencing
+    container:
+        "broadinstitute/gatk:4.2.6.1"
+    shell:
+        """
+        gatk HaplotypeCaller \
+            -I {input.bam} \
+            -R {input.ref} \
+            -O {output.gvcf} \
+            -ERC GVCF \
+            --native-pair-hmm-threads 4
+        """
+
+# GenomicsDBImport for Joint Genotyping
+rule gatk_genomicsdb_import:
+    input:
+        gvcfs=expand("results/variant_calling/gvcf/{sample}.g.vcf.gz", sample=SAMPLES)
+    output:
+        genomicsdb=directory("results/variant_calling/genomicsdb/cohort_db")
+    params:
+        intervals="reference/target_intervals.bed",
+        sample_map="config/sample_map.txt"  # File with sample_name\tpath_to_gvcf
+    container:
+        "broadinstitute/gatk:4.2.6.1"
+    shell:
+        """
+        gatk GenomicsDBImport \
+            --genomicsdb-workspace-path {output.genomicsdb} \
+            --batch-size 50 \
+            -L {params.intervals} \
+            --sample-name-map {params.sample_map}
+        """
+
+# Joint Genotyping
+rule gatk_joint_genotyping:
+    input:
+        genomicsdb="results/variant_calling/genomicsdb/cohort_db",
+        ref="reference/genome.fa"
+    output:
+        vcf="results/variant_calling/raw_variants/cohort.vcf.gz"
+    container:
+        "broadinstitute/gatk:4.2.6.1"
+    shell:
+        """
+        gatk GenotypeGVCFs \
+            -R {input.ref} \
+            -V gendb://{input.genomicsdb} \
+            -O {output.vcf}
+        """
+
+# Extract SNPs
+rule gatk_select_snps:
+    input:
+        vcf="results/variant_calling/raw_variants/cohort.vcf.gz",
+        ref="reference/genome.fa"
+    output:
+        snps="results/variant_calling/filtered_variants/cohort_snps.vcf.gz"
+    container:
+        "broadinstitute/gatk:4.2.6.1"
+    shell:
+        """
+        gatk SelectVariants \
+            -R {input.ref} \
+            -V {input.vcf} \
+            -select-type SNP \
+            -O {output.snps}
+        """
+
+# Extract Indels
+rule gatk_select_indels:
+    input:
+        vcf="results/variant_calling/raw_variants/cohort.vcf.gz",
+        ref="reference/genome.fa"
+    output:
+        indels="results/variant_calling/filtered_variants/cohort_indels.vcf.gz"
+    container:
+        "broadinstitute/gatk:4.2.6.1"
+    shell:
+        """
+        gatk SelectVariants \
+            -R {input.ref} \
+            -V {input.vcf} \
+            -select-type INDEL \
+            -O {output.indels}
+        """
+
+# Hard Filter SNPs
+rule gatk_filter_snps:
+    input:
+        snps="results/variant_calling/filtered_variants/cohort_snps.vcf.gz",
+        ref="reference/genome.fa"
+    output:
+        filtered_snps="results/variant_calling/filtered_variants/cohort_snps_filtered.vcf.gz"
+    params:
+        filter_expression="QD < 2.0 || FS > 60.0 || MQ < 40.0 || MQRankSum < -12.5 || ReadPosRankSum < -8.0"
+    container:
+        "broadinstitute/gatk:4.2.6.1"
+    shell:
+        """
+        gatk VariantFiltration \
+            -R {input.ref} \
+            -V {input.snps} \
+            --filter-expression "{params.filter_expression}" \
+            --filter-name "SNP_HARD_FILTER" \
+            -O {output.filtered_snps}
+        """
+
+# Hard Filter Indels
+rule gatk_filter_indels:
+    input:
+        indels="results/variant_calling/filtered_variants/cohort_indels.vcf.gz",
+        ref="reference/genome.fa"
+    output:
+        filtered_indels="results/variant_calling/filtered_variants/cohort_indels_filtered.vcf.gz"
+    params:
+        filter_expression="QD < 2.0 || FS > 200.0 || ReadPosRankSum < -20.0"
+    container:
+        "broadinstitute/gatk:4.2.6.1"
+    shell:
+        """
+        gatk VariantFiltration \
+            -R {input.ref} \
+            -V {input.indels} \
+            --filter-expression "{params.filter_expression}" \
+            --filter-name "INDEL_HARD_FILTER" \
+            -O {output.filtered_indels}
+        """
+
+# Merge Filtered Variants
+rule gatk_merge_variants:
+    input:
+        snps="results/variant_calling/filtered_variants/cohort_snps_filtered.vcf.gz",
+        indels="results/variant_calling/filtered_variants/cohort_indels_filtered.vcf.gz",
+        ref="reference/genome.fa"
+    output:
+        merged="results/variant_calling/final_variants/cohort_final_variants.vcf.gz"
+    container:
+        "broadinstitute/gatk:4.2.6.1"
+    shell:
+        """
+        gatk MergeVcfs \
+            -I {input.snps} \
+            -I {input.indels} \
+            -O {output.merged}
+        """
+
+# Variant Annotation with SnpEff
+rule snpeff_annotation:
+    input:
+        vcf="results/variant_calling/final_variants/cohort_final_variants.vcf.gz"
+    output:
+        annotated_vcf="results/variant_calling/annotated_variants/cohort_annotated.vcf.gz",
+        stats="results/variant_calling/annotated_variants/snpEff_summary.html"
+    params:
+        genome="GRCh38.99"  # Adjust based on your reference genome
+    container:
+        "quay.io/biocontainers/snpeff:5.0--hdfd78af_1"
+    shell:
+        """
+        snpEff {params.genome} {input.vcf} > {output.annotated_vcf}
+        mv snpEff_summary.html {output.stats}
+        """
+
+# Variant Annotation with VEP
+rule vep_annotation:
+    input:
+        vcf="results/variant_calling/final_variants/cohort_final_variants.vcf.gz"
+    output:
+        annotated_vcf="results/variant_calling/annotated_variants/cohort_vep_annotated.vcf.gz",
+        stats="results/variant_calling/annotated_variants/vep_summary.html"
+    params:
+        cache_dir="/opt/vep/cache",
+        species="homo_sapiens",
+        assembly="GRCh38"
+    container:
+        "ensemblorg/ensembl-vep:latest"
+    shell:
+        """
+        vep --input_file {input.vcf} \
+            --output_file {output.annotated_vcf} \
+            --format vcf \
+            --vcf \
+            --cache \
+            --dir_cache {params.cache_dir} \
+            --species {params.species} \
+            --assembly {params.assembly} \
+            --stats_file {output.stats} \
+            --compress_output bgzip
+        """
+
+# Variant Quality Control Metrics
+rule variant_qc:
+    input:
+        vcf="results/variant_calling/final_variants/cohort_final_variants.vcf.gz"
+    output:
+        stats="results/variant_calling/qc/variant_stats.txt",
+        plots_dir=directory("results/variant_calling/qc/plots")
+    container:
+        "quay.io/biocontainers/bcftools:1.15.1--h0ea216a_0"
+    shell:
+        """
+        bcftools stats {input.vcf} > {output.stats}
+        plot-vcfstats -p {output.plots_dir} {output.stats}
+        """

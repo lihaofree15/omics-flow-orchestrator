@@ -1,0 +1,245 @@
+# 生物信息学分析流程配置文件
+# Bioinformatics Analysis Pipeline Configuration
+
+# 项目基本信息 / Project Information
+project:
+  name: "Genomics Analysis Pipeline"
+  version: "1.0.0"
+  description: "Comprehensive genomics analysis workflow with quality control, alignment, and differential expression analysis"
+  author: "Bioinformatics Team"
+  contact: "support@bioinfo.org"
+
+# 样品和分组信息 / Sample and Group Information
+metadata:
+  file: "config/metadata.tsv"
+  sample_id_column: "sample_id"
+  condition_column: "condition"
+  batch_column: "batch"
+  replicate_column: "replicate"
+  
+# 输入数据配置 / Input Data Configuration
+input:
+  data_directory: "data/raw"
+  file_pattern: "*_{R1,R2}.fastq.gz"
+  read_type: "paired"  # single, paired
+  platform: "Illumina"
+
+# 参考基因组配置 / Reference Genome Configuration
+reference:
+  genome_fasta: "reference/genome.fa"
+  annotation_gtf: "reference/annotation.gtf"
+  transcripts_fasta: "reference/transcripts.fa"
+  known_variants: "reference/known_variants.vcf.gz"
+  target_intervals: "reference/target_intervals.bed"
+  
+  # 索引文件 / Index Files
+  star_index: "reference/star_index"
+  bwa_index: "reference/bwa_index"
+  salmon_index: "reference/salmon_index"
+  rsem_index: "reference/rsem_index"
+
+# 质量控制参数 / Quality Control Parameters
+quality_control:
+  fastqc:
+    enabled: true
+    threads: 4
+  
+  trimmomatic:
+    enabled: true
+    adapters: "adapters/TruSeq3-PE.fa"
+    leading: 3
+    trailing: 3
+    sliding_window: "4:15"
+    min_length: 36
+    threads: 4
+  
+  multiqc:
+    enabled: true
+
+# 比对参数 / Alignment Parameters
+alignment:
+  method: "star"  # star, bwa, hisat2
+  
+  star:
+    threads: 8
+    sjdb_overhang: 99
+    out_sam_type: "BAM SortedByCoordinate"
+    filter_intron_motifs: "RemoveNoncanonical"
+  
+  bwa:
+    threads: 8
+    algorithm: "mem"
+  
+  mark_duplicates:
+    enabled: true
+    tool: "picard"  # picard, sambamba
+
+# 定量参数 / Quantification Parameters
+quantification:
+  method: "featurecounts"  # featurecounts, salmon, htseq, stringtie, rsem
+  
+  featurecounts:
+    feature_type: "exon"
+    attribute_type: "gene_id"
+    strand: 0  # 0: unstranded, 1: stranded, 2: reversely stranded
+    min_overlap: 1
+    threads: 8
+  
+  salmon:
+    library_type: "A"  # Automatic detection
+    validate_mappings: true
+    threads: 4
+  
+  stringtie:
+    threads: 4
+    ballgown_format: true
+
+# 差异表达分析参数 / Differential Expression Parameters
+differential_expression:
+  methods: ["deseq2", "edger", "limma_voom"]
+  
+  design_formula: "~ batch + condition"
+  contrast: "condition_treatment_vs_control"
+  
+  filters:
+    alpha: 0.05
+    lfc_threshold: 1.0
+    min_counts: 10
+    min_samples: 3
+  
+  deseq2:
+    test: "Wald"
+    fit_type: "parametric"
+    sf_type: "ratio"
+  
+  edger:
+    normalization: "TMM"
+    dispersion_method: "CoxReid"
+  
+  limma_voom:
+    normalize_method: "quantile"
+    trend: true
+
+# 富集分析参数 / Enrichment Analysis Parameters
+enrichment:
+  organism: "human"  # human, mouse, rat
+  
+  go_analysis:
+    enabled: true
+    ontology: "ALL"  # BP, CC, MF, ALL
+    p_cutoff: 0.05
+    q_cutoff: 0.2
+  
+  kegg_analysis:
+    enabled: true
+    organism_code: "hsa"  # hsa (human), mmu (mouse), rno (rat)
+    p_cutoff: 0.05
+  
+  gsea:
+    enabled: true
+    gene_sets: "hallmark"  # hallmark, kegg, go_bp, go_cc, go_mf
+    min_size: 15
+    max_size: 500
+
+# 变异检测参数 / Variant Calling Parameters (for DNA-seq)
+variant_calling:
+  enabled: false
+  
+  gatk:
+    base_recalibration: true
+    joint_genotyping: true
+    hard_filters:
+      snp: "QD < 2.0 || FS > 60.0 || MQ < 40.0 || MQRankSum < -12.5 || ReadPosRankSum < -8.0"
+      indel: "QD < 2.0 || FS > 200.0 || ReadPosRankSum < -20.0"
+  
+  annotation:
+    tools: ["snpeff", "vep"]
+    genome_version: "GRCh38.99"
+
+# 可视化参数 / Visualization Parameters
+visualization:
+  plots:
+    volcano_plot: true
+    ma_plot: true
+    heatmap: true
+    pca_plot: true
+  
+  heatmap:
+    top_genes: 50
+    clustering_method: "ward.D2"
+    annotation_columns: ["condition", "batch"]
+  
+  pca:
+    color_by: "condition"
+    shape_by: "batch"
+
+# 计算资源配置 / Computational Resources
+resources:
+  default:
+    cpu: 4
+    memory: "8GB"
+    time: "4h"
+  
+  high_memory:
+    cpu: 8
+    memory: "32GB"
+    time: "8h"
+  
+  alignment:
+    cpu: 8
+    memory: "16GB"
+    time: "6h"
+
+# 输出配置 / Output Configuration
+output:
+  base_directory: "results"
+  publish_mode: "copy"  # copy, symlink, move
+  
+  directories:
+    qc: "results/qc"
+    alignment: "results/alignment"
+    quantification: "results/quantification"
+    differential_expression: "results/differential_expression"
+    enrichment: "results/enrichment"
+    variant_calling: "results/variant_calling"
+    plots: "results/plots"
+    reports: "results/reports"
+
+# 容器配置 / Container Configuration
+containers:
+  fastqc: "biocontainers/fastqc:v0.11.9_cv8"
+  trimmomatic: "quay.io/biocontainers/trimmomatic:0.39--hdfd78af_2"
+  multiqc: "ewels/multiqc:latest"
+  star: "nfcore/star:2.7.10a"
+  bwa: "biocontainers/bwa:v0.7.17_cv1"
+  samtools: "biocontainers/samtools:v1.15.1_cv0.3"
+  picard: "broadinstitute/picard:latest"
+  featurecounts: "nfcore/subread:2.0.1"
+  salmon: "combinelab/salmon:latest"
+  htseq: "quay.io/biocontainers/htseq:0.13.5--py39h38f01e4_1"
+  stringtie: "quay.io/biocontainers/stringtie:2.2.1--hecb563c_2"
+  rsem: "quay.io/biocontainers/rsem:1.3.3--pl5321h4ac6f70_3"
+  r_deseq2: "bioconductor/bioconductor_docker:RELEASE_3_14"
+  gatk: "broadinstitute/gatk:4.2.6.1"
+  snpeff: "quay.io/biocontainers/snpeff:5.0--hdfd78af_1"
+  vep: "ensemblorg/ensembl-vep:latest"
+  bcftools: "quay.io/biocontainers/bcftools:1.15.1--h0ea216a_0"
+
+# 报告配置 / Report Configuration
+reports:
+  html_report: true
+  pdf_report: false
+  
+  sections:
+    - quality_control
+    - alignment_stats
+    - quantification_summary
+    - differential_expression
+    - enrichment_analysis
+    - variant_summary
+
+# 调试和日志配置 / Debug and Logging Configuration
+debug:
+  enabled: false
+  log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  keep_intermediate_files: false

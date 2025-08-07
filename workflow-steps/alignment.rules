@@ -1,0 +1,141 @@
+# Alignment Rules for RNA-seq and Genome Sequencing
+# Based on RASflow alignment guidelines
+
+# STAR Genome Index Generation
+rule star_index:
+    input:
+        genome="reference/genome.fa",
+        gtf="reference/annotation.gtf"
+    output:
+        directory("reference/star_index")
+    params:
+        sjdboverhang=99
+    threads: 8
+    container:
+        "nfcore/star:2.7.10a"
+    shell:
+        """
+        STAR --runMode genomeGenerate \
+             --genomeDir {output} \
+             --genomeFastaFiles {input.genome} \
+             --sjdbGTFfile {input.gtf} \
+             --sjdbOverhang {params.sjdboverhang} \
+             --runThreadN {threads}
+        """
+
+# STAR Alignment for RNA-seq
+rule star_align:
+    input:
+        r1="results/trimmed/{sample}_R1_paired.fastq.gz",
+        r2="results/trimmed/{sample}_R2_paired.fastq.gz",
+        index="reference/star_index"
+    output:
+        bam="results/alignment/{sample}.Aligned.sortedByCoord.out.bam",
+        log="results/alignment/{sample}.Log.final.out",
+        sj="results/alignment/{sample}.SJ.out.tab"
+    params:
+        prefix="results/alignment/{sample}.",
+        outSAMtype="BAM SortedByCoordinate",
+        readFilesCommand="zcat"
+    threads: 8
+    container:
+        "nfcore/star:2.7.10a"
+    shell:
+        """
+        STAR --genomeDir {input.index} \
+             --readFilesIn {input.r1} {input.r2} \
+             --readFilesCommand {params.readFilesCommand} \
+             --outFileNamePrefix {params.prefix} \
+             --outSAMtype {params.outSAMtype} \
+             --runThreadN {threads} \
+             --outSAMstrandField intronMotif \
+             --outFilterIntronMotifs RemoveNoncanonical
+        """
+
+# BWA Index Generation for DNA-seq
+rule bwa_index:
+    input:
+        genome="reference/genome.fa"
+    output:
+        amb="reference/genome.fa.amb",
+        ann="reference/genome.fa.ann",
+        bwt="reference/genome.fa.bwt",
+        pac="reference/genome.fa.pac",
+        sa="reference/genome.fa.sa"
+    container:
+        "biocontainers/bwa:v0.7.17_cv1"
+    shell:
+        """
+        bwa index {input.genome}
+        """
+
+# BWA Alignment for DNA-seq
+rule bwa_align:
+    input:
+        r1="results/trimmed/{sample}_R1_paired.fastq.gz",
+        r2="results/trimmed/{sample}_R2_paired.fastq.gz",
+        genome="reference/genome.fa",
+        amb="reference/genome.fa.amb",
+        ann="reference/genome.fa.ann",
+        bwt="reference/genome.fa.bwt",
+        pac="reference/genome.fa.pac",
+        sa="reference/genome.fa.sa"
+    output:
+        bam="results/alignment/{sample}.sorted.bam"
+    params:
+        rg="@RG\\tID:{sample}\\tSM:{sample}\\tLB:library\\tPL:ILLUMINA"
+    threads: 8
+    container:
+        "biocontainers/bwa:v0.7.17_cv1"
+    shell:
+        """
+        bwa mem -t {threads} -R '{params.rg}' {input.genome} {input.r1} {input.r2} | \
+        samtools sort -@ {threads} -o {output.bam} -
+        """
+
+# SAMtools Index
+rule samtools_index:
+    input:
+        bam="results/alignment/{sample}.sorted.bam"
+    output:
+        bai="results/alignment/{sample}.sorted.bam.bai"
+    container:
+        "biocontainers/samtools:v1.15.1_cv0.3"
+    shell:
+        """
+        samtools index {input.bam}
+        """
+
+# Alignment Statistics
+rule alignment_stats:
+    input:
+        bam="results/alignment/{sample}.sorted.bam"
+    output:
+        stats="results/alignment/stats/{sample}_alignment_stats.txt",
+        flagstat="results/alignment/stats/{sample}_flagstat.txt"
+    container:
+        "biocontainers/samtools:v1.15.1_cv0.3"
+    shell:
+        """
+        samtools stats {input.bam} > {output.stats}
+        samtools flagstat {input.bam} > {output.flagstat}
+        """
+
+# Mark Duplicates with Picard
+rule mark_duplicates:
+    input:
+        bam="results/alignment/{sample}.sorted.bam"
+    output:
+        bam="results/alignment/{sample}.marked_duplicates.bam",
+        metrics="results/alignment/stats/{sample}_duplicate_metrics.txt"
+    container:
+        "broadinstitute/picard:latest"
+    shell:
+        """
+        java -jar /usr/picard/picard.jar MarkDuplicates \
+            INPUT={input.bam} \
+            OUTPUT={output.bam} \
+            METRICS_FILE={output.metrics} \
+            VALIDATION_STRINGENCY=SILENT \
+            CREATE_INDEX=true
+        """

@@ -41,6 +41,35 @@ const WorkflowConfigSchema = new Schema<IWorkflowConfig>(
       type: String
     },
     parameters: {
+      // Metadata configuration
+      metadata: {
+        file: {
+          type: String,
+          default: 'config/metadata.tsv',
+          trim: true
+        },
+        sampleIdColumn: {
+          type: String,
+          default: 'sample_id',
+          trim: true
+        },
+        conditionColumn: {
+          type: String,
+          default: 'condition',
+          trim: true
+        },
+        batchColumn: {
+          type: String,
+          default: 'batch',
+          trim: true
+        },
+        replicateColumn: {
+          type: String,
+          default: 'replicate',
+          trim: true
+        }
+      },
+      
       // Common parameters
       genome: {
         reference: {

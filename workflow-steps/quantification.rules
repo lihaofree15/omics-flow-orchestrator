@@ -1,0 +1,194 @@
+# Quantification Rules for RNA-seq Analysis
+# Based on RASflow quantification guidelines
+
+# featureCounts for Gene Expression Quantification
+rule featurecounts:
+    input:
+        bams=expand("results/alignment/{sample}.Aligned.sortedByCoord.out.bam", sample=SAMPLES),
+        gtf="reference/annotation.gtf"
+    output:
+        counts="results/quantification/gene_counts.txt",
+        summary="results/quantification/gene_counts.txt.summary"
+    params:
+        feature_type="exon",
+        attribute_type="gene_id",
+        strand=0,  # 0: unstranded, 1: stranded, 2: reversely stranded
+        min_overlap=1,
+        multi_mapping=False
+    threads: 8
+    container:
+        "nfcore/subread:2.0.1"
+    shell:
+        """
+        featureCounts -T {threads} \
+                      -t {params.feature_type} \
+                      -g {params.attribute_type} \
+                      -s {params.strand} \
+                      --minOverlap {params.min_overlap} \
+                      -a {input.gtf} \
+                      -o {output.counts} \
+                      {input.bams}
+        """
+
+# Salmon for Transcript-level Quantification
+rule salmon_index:
+    input:
+        transcripts="reference/transcripts.fa"
+    output:
+        directory("reference/salmon_index")
+    threads: 8
+    container:
+        "combinelab/salmon:latest"
+    shell:
+        """
+        salmon index -t {input.transcripts} -i {output} -p {threads}
+        """
+
+rule salmon_quant:
+    input:
+        r1="results/trimmed/{sample}_R1_paired.fastq.gz",
+        r2="results/trimmed/{sample}_R2_paired.fastq.gz",
+        index="reference/salmon_index"
+    output:
+        directory("results/quantification/salmon/{sample}")
+    params:
+        libtype="A"  # Automatic library type detection
+    threads: 4
+    container:
+        "combinelab/salmon:latest"
+    shell:
+        """
+        salmon quant -i {input.index} \
+                     -l {params.libtype} \
+                     -1 {input.r1} \
+                     -2 {input.r2} \
+                     -p {threads} \
+                     --validateMappings \
+                     -o {output}
+        """
+
+# HTSeq for Alternative Gene Counting
+rule htseq_count:
+    input:
+        bam="results/alignment/{sample}.Aligned.sortedByCoord.out.bam",
+        gtf="reference/annotation.gtf"
+    output:
+        counts="results/quantification/htseq/{sample}_htseq_counts.txt"
+    params:
+        stranded="no",  # yes, no, reverse
+        feature_type="exon",
+        id_attribute="gene_id",
+        mode="union"
+    container:
+        "quay.io/biocontainers/htseq:0.13.5--py39h38f01e4_1"
+    shell:
+        """
+        htseq-count -f bam \
+                    -r pos \
+                    -s {params.stranded} \
+                    -t {params.feature_type} \
+                    -i {params.id_attribute} \
+                    -m {params.mode} \
+                    {input.bam} {input.gtf} > {output.counts}
+        """
+
+# StringTie for Transcript Assembly and Quantification
+rule stringtie_assemble:
+    input:
+        bam="results/alignment/{sample}.Aligned.sortedByCoord.out.bam",
+        gtf="reference/annotation.gtf"
+    output:
+        gtf="results/quantification/stringtie/{sample}_assembled.gtf",
+        abundance="results/quantification/stringtie/{sample}_gene_abundances.tab"
+    params:
+        label="{sample}"
+    threads: 4
+    container:
+        "quay.io/biocontainers/stringtie:2.2.1--hecb563c_2"
+    shell:
+        """
+        stringtie {input.bam} \
+                  -G {input.gtf} \
+                  -o {output.gtf} \
+                  -A {output.abundance} \
+                  -l {params.label} \
+                  -p {threads}
+        """
+
+# Merge StringTie Assemblies
+rule stringtie_merge:
+    input:
+        gtfs=expand("results/quantification/stringtie/{sample}_assembled.gtf", sample=SAMPLES),
+        ref_gtf="reference/annotation.gtf"
+    output:
+        merged_gtf="results/quantification/stringtie/merged.gtf"
+    container:
+        "quay.io/biocontainers/stringtie:2.2.1--hecb563c_2"
+    shell:
+        """
+        stringtie --merge \
+                  -G {input.ref_gtf} \
+                  -o {output.merged_gtf} \
+                  {input.gtfs}
+        """
+
+# Ballgown Format Preparation
+rule stringtie_ballgown:
+    input:
+        bam="results/alignment/{sample}.Aligned.sortedByCoord.out.bam",
+        merged_gtf="results/quantification/stringtie/merged.gtf"
+    output:
+        directory("results/quantification/ballgown/{sample}")
+    threads: 4
+    container:
+        "quay.io/biocontainers/stringtie:2.2.1--hecb563c_2"
+    shell:
+        """
+        stringtie {input.bam} \
+                  -G {input.merged_gtf} \
+                  -o {output}/{wildcards.sample}.gtf \
+                  -B \
+                  -p {threads}
+        """
+
+# RSEM for Accurate Quantification
+rule rsem_prepare_reference:
+    input:
+        genome="reference/genome.fa",
+        gtf="reference/annotation.gtf"
+    output:
+        directory("reference/rsem_index")
+    threads: 8
+    container:
+        "quay.io/biocontainers/rsem:1.3.3--pl5321h4ac6f70_3"
+    shell:
+        """
+        rsem-prepare-reference --gtf {input.gtf} \
+                              --bowtie2 \
+                              -p {threads} \
+                              {input.genome} \
+                              {output}/rsem_ref
+        """
+
+rule rsem_calculate_expression:
+    input:
+        r1="results/trimmed/{sample}_R1_paired.fastq.gz",
+        r2="results/trimmed/{sample}_R2_paired.fastq.gz",
+        index="reference/rsem_index"
+    output:
+        genes="results/quantification/rsem/{sample}.genes.results",
+        isoforms="results/quantification/rsem/{sample}.isoforms.results"
+    params:
+        prefix="results/quantification/rsem/{sample}"
+    threads: 8
+    container:
+        "quay.io/biocontainers/rsem:1.3.3--pl5321h4ac6f70_3"
+    shell:
+        """
+        rsem-calculate-expression --paired-end \
+                                 --bowtie2 \
+                                 -p {threads} \
+                                 {input.r1} {input.r2} \
+                                 {input.index}/rsem_ref \
+                                 {params.prefix}
+        """
