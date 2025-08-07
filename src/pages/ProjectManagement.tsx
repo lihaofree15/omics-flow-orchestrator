@@ -23,11 +23,9 @@ import {
   Play,
   Pause,
   Download,
-  Upload,
-  Terminal as TerminalIcon
+  Upload
 } from "lucide-react";
 import { useState } from "react";
-import { Terminal } from "@/components/Terminal";
 
 interface Project {
   id: string;
@@ -110,8 +108,6 @@ export default function ProjectManagement() {
   ]);
 
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
-  const [showTerminal, setShowTerminal] = useState(false);
-  const [terminalMinimized, setTerminalMinimized] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newProject, setNewProject] = useState({
     name: '',
@@ -176,11 +172,7 @@ export default function ProjectManagement() {
 
   const handleProjectAction = (projectId: string, action: string) => {
     console.log(`执行操作: ${action} on project ${projectId}`);
-    if (action === 'terminal') {
-      setSelectedProject(projectId);
-      setShowTerminal(true);
-      setTerminalMinimized(false);
-    }
+    // Handle other project actions here
   };
 
   return (
@@ -333,8 +325,8 @@ export default function ProjectManagement() {
                       <Eye className="w-3 h-3 mr-1" />
                       查看
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => handleProjectAction(project.id, 'terminal')}>
-                      <TerminalIcon className="w-3 h-3" />
+                    <Button variant="outline" size="sm" onClick={() => handleProjectAction(project.id, 'edit')}>
+                      <Edit className="w-3 h-3" />
                     </Button>
                     {project.status === 'active' && (
                       <Button variant="outline" size="sm" onClick={() => handleProjectAction(project.id, 'pause')}>
@@ -406,9 +398,6 @@ export default function ProjectManagement() {
                             <Button variant="ghost" size="sm" onClick={() => handleProjectAction(project.id, 'edit')}>
                               <Edit className="w-3 h-3" />
                             </Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleProjectAction(project.id, 'terminal')}>
-                              <TerminalIcon className="w-3 h-3" />
-                            </Button>
                             <Button variant="ghost" size="sm" onClick={() => handleProjectAction(project.id, 'archive')}>
                               <Archive className="w-3 h-3" />
                             </Button>
@@ -462,15 +451,6 @@ export default function ProjectManagement() {
         </TabsContent>
       </Tabs>
 
-      {showTerminal && (
-        <Terminal
-          projectId={selectedProject}
-          onClose={() => setShowTerminal(false)}
-          isMinimized={terminalMinimized}
-          onMinimize={() => setTerminalMinimized(true)}
-          onMaximize={() => setTerminalMinimized(false)}
-        />
-      )}
     </div>
   );
 }
