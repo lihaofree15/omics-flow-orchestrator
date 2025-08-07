@@ -1,0 +1,101 @@
+# Quality Control Rules for Genomics Analysis
+# Based on RASflow quality control guidelines
+
+# FastQC Quality Assessment
+rule fastqc:
+    input:
+        reads="data/raw/{sample}.fastq.gz"
+    output:
+        html="results/qc/fastqc/{sample}_fastqc.html",
+        zip="results/qc/fastqc/{sample}_fastqc.zip"
+    params:
+        outdir="results/qc/fastqc"
+    container:
+        "biocontainers/fastqc:v0.11.9_cv8"
+    shell:
+        """
+        fastqc -o {params.outdir} {input.reads}
+        """
+
+# MultiQC Summary Report
+rule multiqc:
+    input:
+        expand("results/qc/fastqc/{sample}_fastqc.zip", sample=SAMPLES)
+    output:
+        "results/qc/multiqc_report.html"
+    params:
+        outdir="results/qc"
+    container:
+        "ewels/multiqc:latest"
+    shell:
+        """
+        multiqc {params.outdir} -o {params.outdir}
+        """
+
+# Trimmomatic Read Trimming
+rule trimmomatic:
+    input:
+        r1="data/raw/{sample}_R1.fastq.gz",
+        r2="data/raw/{sample}_R2.fastq.gz"
+    output:
+        r1_paired="results/trimmed/{sample}_R1_paired.fastq.gz",
+        r1_unpaired="results/trimmed/{sample}_R1_unpaired.fastq.gz",
+        r2_paired="results/trimmed/{sample}_R2_paired.fastq.gz",
+        r2_unpaired="results/trimmed/{sample}_R2_unpaired.fastq.gz"
+    params:
+        adapters="adapters/TruSeq3-PE.fa",
+        leading=3,
+        trailing=3,
+        slidingwindow="4:15",
+        minlen=36
+    container:
+        "quay.io/biocontainers/trimmomatic:0.39--hdfd78af_2"
+    threads: 4
+    shell:
+        """
+        trimmomatic PE -threads {threads} {input.r1} {input.r2} \
+            {output.r1_paired} {output.r1_unpaired} \
+            {output.r2_paired} {output.r2_unpaired} \
+            ILLUMINACLIP:{params.adapters}:2:30:10 \
+            LEADING:{params.leading} \
+            TRAILING:{params.trailing} \
+            SLIDINGWINDOW:{params.slidingwindow} \
+            MINLEN:{params.minlen}
+        """
+
+# Quality Control Post-trimming
+rule fastqc_trimmed:
+    input:
+        r1="results/trimmed/{sample}_R1_paired.fastq.gz",
+        r2="results/trimmed/{sample}_R2_paired.fastq.gz"
+    output:
+        r1_html="results/qc/fastqc_trimmed/{sample}_R1_paired_fastqc.html",
+        r1_zip="results/qc/fastqc_trimmed/{sample}_R1_paired_fastqc.zip",
+        r2_html="results/qc/fastqc_trimmed/{sample}_R2_paired_fastqc.html",
+        r2_zip="results/qc/fastqc_trimmed/{sample}_R2_paired_fastqc.zip"
+    params:
+        outdir="results/qc/fastqc_trimmed"
+    container:
+        "biocontainers/fastqc:v0.11.9_cv8"
+    shell:
+        """
+        fastqc -o {params.outdir} {input.r1} {input.r2}
+        """
+
+# Read Statistics
+rule read_stats:
+    input:
+        raw_r1="data/raw/{sample}_R1.fastq.gz",
+        raw_r2="data/raw/{sample}_R2.fastq.gz",
+        trimmed_r1="results/trimmed/{sample}_R1_paired.fastq.gz",
+        trimmed_r2="results/trimmed/{sample}_R2_paired.fastq.gz"
+    output:
+        stats="results/qc/stats/{sample}_read_stats.txt"
+    shell:
+        """
+        echo "Sample: {wildcards.sample}" > {output.stats}
+        echo "Raw reads R1: $(zcat {input.raw_r1} | wc -l | awk '{{print $1/4}}')" >> {output.stats}
+        echo "Raw reads R2: $(zcat {input.raw_r2} | wc -l | awk '{{print $1/4}}')" >> {output.stats}
+        echo "Trimmed reads R1: $(zcat {input.trimmed_r1} | wc -l | awk '{{print $1/4}}')" >> {output.stats}
+        echo "Trimmed reads R2: $(zcat {input.trimmed_r2} | wc -l | awk '{{print $1/4}}')" >> {output.stats}
+        """

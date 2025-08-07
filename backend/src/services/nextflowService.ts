@@ -90,12 +90,25 @@ export class NextflowService {
 
 nextflow.enable.dsl=2
 
+// Import workflow modules from separate rule files
+include { FASTQC; MULTIQC } from './workflow-steps/quality_control.rules'
+include { STAR_INDEX; STAR_ALIGN; BWA_INDEX; BWA_ALIGN; SAMTOOLS_INDEX; ALIGNMENT_STATS; MARK_DUPLICATES } from './workflow-steps/alignment.rules'
+include { FEATURECOUNTS; SALMON_INDEX; SALMON_QUANT; HTSEQ_COUNT; STRINGTIE_ASSEMBLE; STRINGTIE_MERGE; STRINGTIE_BALLGOWN; RSEM_PREPARE_REFERENCE; RSEM_CALCULATE_EXPRESSION } from './workflow-steps/quantification.rules'
+include { DESEQ2_ANALYSIS; EDGER_ANALYSIS; LIMMA_VOOM_ANALYSIS; GSEA_ANALYSIS; GO_ENRICHMENT; KEGG_ENRICHMENT; VOLCANO_PLOTS; HEATMAPS; PCA_ANALYSIS; MA_PLOTS; SUMMARY_REPORT } from './workflow-steps/differential_expression.rules'
+
 // Parameters
 params.reads = "${params.inputFiles.join(',')}"
 params.genome_ref = "${rnaSeq?.starIndex || ''}"
 params.gtf = "${rnaSeq?.gtfFile || ''}"
 params.outdir = "${params.outputDir}"
 params.strandedness = "${rnaSeq?.strandedness || 'unstranded'}"
+params.metadata = "${params.metadataFile || 'config/metadata.tsv'}"
+
+// Sample definitions from metadata
+SAMPLES = params.metadata ? Channel.fromPath(params.metadata)
+    .splitCsv(header: true, sep: '\\t')
+    .map { row -> row.sample_id }
+    .collect() : []
 
 // Input channels
 ch_reads = Channel.fromPath(params.reads.split(','), checkIfExists: true)

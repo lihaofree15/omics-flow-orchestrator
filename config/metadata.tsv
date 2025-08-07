@@ -1,0 +1,7 @@
+sample_id	sample_name	condition	treatment	batch	replicate	organism	tissue	cell_type	platform	read_type	library_strategy	fastq_1	fastq_2	description
+CTRL_1	Control_Rep1	control	untreated	batch1	rep1	Homo sapiens	brain	neurons	Illumina	paired	RNA-Seq	data/raw/CTRL_1_R1.fastq.gz	data/raw/CTRL_1_R2.fastq.gz	Control sample replicate 1
+CTRL_2	Control_Rep2	control	untreated	batch1	rep2	Homo sapiens	brain	neurons	Illumina	paired	RNA-Seq	data/raw/CTRL_2_R1.fastq.gz	data/raw/CTRL_2_R2.fastq.gz	Control sample replicate 2
+CTRL_3	Control_Rep3	control	untreated	batch2	rep3	Homo sapiens	brain	neurons	Illumina	paired	RNA-Seq	data/raw/CTRL_3_R1.fastq.gz	data/raw/CTRL_3_R2.fastq.gz	Control sample replicate 3
+TREAT_1	Treatment_Rep1	treatment	drug_A	batch1	rep1	Homo sapiens	brain	neurons	Illumina	paired	RNA-Seq	data/raw/TREAT_1_R1.fastq.gz	data/raw/TREAT_1_R2.fastq.gz	Treatment sample replicate 1
+TREAT_2	Treatment_Rep2	treatment	drug_A	batch1	rep2	Homo sapiens	brain	neurons	Illumina	paired	RNA-Seq	data/raw/TREAT_2_R1.fastq.gz	data/raw/TREAT_2_R2.fastq.gz	Treatment sample replicate 2
+TREAT_3	Treatment_Rep3	treatment	drug_A	batch2	rep3	Homo sapiens	brain	neurons	Illumina	paired	RNA-Seq	data/raw/TREAT_3_R1.fastq.gz	data/raw/TREAT_3_R2.fastq.gz	Treatment sample replicate 3
