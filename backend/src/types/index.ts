@@ -168,3 +168,163 @@ export interface JobProgress {
   message?: string;
   logs?: string[];
 }
+
+// Sample interfaces
+export interface ISample extends Document {
+  _id: string;
+  projectId: string;
+  userId: string;
+  sampleId: string;
+  sampleName: string;
+  description?: string;
+  organism: string;
+  tissue?: string;
+  cellType?: string;
+  condition?: string;
+  treatment?: string;
+  timePoint?: string;
+  replicate?: string;
+  sequencingInfo: {
+    platform: 'Illumina' | 'PacBio' | 'Oxford Nanopore' | 'BGI' | 'Other';
+    instrument?: string;
+    readLength?: number;
+    readType: 'single' | 'paired';
+    libraryStrategy: 'RNA-Seq' | 'DNA-Seq' | 'ChIP-Seq' | 'ATAC-Seq' | 'scRNA-Seq' | 'Whole Genome' | 'Exome' | 'Amplicon' | 'Other';
+    librarySelection?: string;
+    libraryLayout: 'SINGLE' | 'PAIRED';
+  };
+  qualityMetrics?: {
+    totalReads?: number;
+    qualityScore?: number;
+    gcContent?: number;
+    duplicationRate?: number;
+  };
+  clinicalData?: {
+    age?: number;
+    gender?: 'Male' | 'Female' | 'Unknown';
+    diseaseStatus?: string;
+    stage?: string;
+    grade?: string;
+  };
+  dataFiles: string[];
+  analysisJobs: string[];
+  metadata: Record<string, any>;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  addDataFile(fileId: string): Promise<ISample>;
+  addAnalysisJob(jobId: string): Promise<ISample>;
+}
+
+// Workflow Config interfaces
+export interface IWorkflowConfig extends Document {
+  _id: string;
+  projectId: string;
+  userId: string;
+  name: string;
+  description?: string;
+  workflowType: 'rna-seq' | 'genome-seq' | 'single-cell-rna-seq';
+  version: string;
+  nextflowScript: string;
+  configFile?: string;
+  parameters: {
+    genome?: {
+      reference?: string;
+      annotation?: string;
+      species?: string;
+    };
+    qc?: {
+      minLength?: number;
+      qualityThreshold?: number;
+      trimAdapters?: boolean;
+    };
+    rnaSeq?: {
+      starIndex?: string;
+      gtfFile?: string;
+      strandedness?: 'unstranded' | 'forward' | 'reverse';
+      featureType?: string;
+      attributeType?: string;
+      deseq2?: {
+        designFormula?: string;
+        contrastGroup?: string;
+        pValueCutoff?: number;
+        logFCCutoff?: number;
+      };
+    };
+    genomeSeq?: {
+      bwaIndex?: string;
+      gatkBundle?: string;
+      knownSites?: string[];
+      ploidy?: number;
+      filterExpression?: string;
+    };
+    scRnaSeq?: {
+      cellRangerRef?: string;
+      expectedCells?: number;
+      chemistry?: 'auto' | 'threeprime' | 'fiveprime' | 'SC3Pv1' | 'SC3Pv2' | 'SC3Pv3' | 'SC5P-PE' | 'SC5P-R2';
+      seurat?: {
+        minCells?: number;
+        minFeatures?: number;
+        maxFeatures?: number;
+        mtPercentCutoff?: number;
+        resolution?: number;
+        dims?: number;
+      };
+      singleR?: {
+        referenceDataset?: 'HumanPrimaryCellAtlasData' | 'BlueprintEncodeData' | 'MouseRNAseqData' | 'ImmGenData';
+        labelColumn?: string;
+      };
+    };
+  };
+  resources: {
+    cpu: number;
+    memory: string;
+    time: string;
+    queue: string;
+  };
+  containers: {
+    fastqc?: string;
+    star?: string;
+    featurecounts?: string;
+    deseq2?: string;
+    bwa?: string;
+    gatk?: string;
+    cellranger?: string;
+    seurat?: string;
+    singler?: string;
+  };
+  isTemplate: boolean;
+  isActive: boolean;
+  executionHistory: Array<{
+    jobId: string;
+    executedAt: Date;
+    status: 'success' | 'failed' | 'cancelled';
+    duration?: number;
+  }>;
+  createdAt: Date;
+  updatedAt: Date;
+  addExecutionRecord(jobId: string, status: string, duration?: number): Promise<IWorkflowConfig>;
+  clone(newName: string, userId: string): IWorkflowConfig;
+}
+
+// Nextflow execution interfaces
+export interface NextflowParams {
+  workDir: string;
+  inputFiles: string[];
+  outputDir: string;
+  configFile?: string;
+  profile?: string;
+  resume?: boolean;
+  parameters: Record<string, any>;
+}
+
+export interface NextflowResult {
+  success: boolean;
+  exitCode: number;
+  stdout: string;
+  stderr: string;
+  workDir: string;
+  outputFiles: string[];
+  duration: number;
+  trace?: any;
+}
