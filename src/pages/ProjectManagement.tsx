@@ -26,6 +26,7 @@ import {
   Upload
 } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface Project {
   id: string;
@@ -44,6 +45,7 @@ interface Project {
 }
 
 export default function ProjectManagement() {
+  const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([
     {
       id: 'proj_001',
@@ -171,8 +173,22 @@ export default function ProjectManagement() {
   };
 
   const handleProjectAction = (projectId: string, action: string) => {
-    console.log(`执行操作: ${action} on project ${projectId}`);
-    // Handle other project actions here
+    switch (action) {
+      case 'view':
+        navigate(`/projects/${projectId}`);
+        break;
+      case 'edit':
+        console.log(`编辑项目: ${projectId}`);
+        break;
+      case 'pause':
+        console.log(`暂停项目: ${projectId}`);
+        break;
+      case 'resume':
+        console.log(`恢复项目: ${projectId}`);
+        break;
+      default:
+        console.log(`执行操作: ${action} on project ${projectId}`);
+    }
   };
 
   return (
