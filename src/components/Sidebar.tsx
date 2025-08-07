@@ -9,7 +9,8 @@ import {
   FileText,
   Dna,
   Microscope,
-  GitBranch
+  GitBranch,
+  FolderOpen
 } from "lucide-react";
 
 const navItems = [
@@ -18,6 +19,12 @@ const navItems = [
     path: "/",
     icon: Activity,
     description: "硬件状态与任务概览"
+  },
+  {
+    label: "项目管理",
+    path: "/projects",
+    icon: FolderOpen,
+    description: "项目创建与管理"
   },
   {
     label: "数据管理",
