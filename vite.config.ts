@@ -1,5 +1,13 @@
 import type { UserConfig } from 'vite';
 import frontendConfig from './apps/frontend/vite.config';
 
-// Re-export frontend Vite config so Lovable can detect Vite at repo root
-export default frontendConfig as UserConfig;
+// Root Vite config delegates to frontend but enforces port 8080 for Lovable
+const config: UserConfig = {
+  ...(frontendConfig as UserConfig),
+  server: {
+    ...((frontendConfig as any).server || {}),
+    port: 8080,
+  },
+};
+
+export default config;
