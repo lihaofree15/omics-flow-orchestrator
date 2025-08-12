@@ -1,0 +1,251 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 多组学分析平台设计系统 - 明亮主题生物信息学风格 */
+
+@layer base {
+  :root {
+    /* 明亮主题基础色彩 */
+    --background: 0 0% 98%;              /* 明亮底色 #FAFAFA */
+    --foreground: 240 10% 15%;           /* 主要文本 */
+
+    --card: 0 0% 100%;                   /* 卡片背景 */
+    --card-foreground: 240 10% 15%;      /* 卡片文本 */
+
+    --popover: 0 0% 100%;                /* 弹窗背景 */
+    --popover-foreground: 240 10% 15%;   /* 弹窗文本 */
+
+    /* 生物信息学主题色 - 清新蓝绿色系 */
+    --primary: 195 100% 40%;             /* 科技蓝 #0099CC */
+    --primary-foreground: 0 0% 100%;     /* 主要按钮文本 */
+    --primary-glow: 195 100% 50%;        /* 发光效果 */
+
+    --secondary: 210 20% 94%;            /* 次要元素背景 */
+    --secondary-foreground: 240 10% 15%; /* 次要元素文本 */
+
+    --muted: 210 20% 96%;                /* 静默背景 */
+    --muted-foreground: 240 5% 45%;      /* 静默文本 */
+
+    --accent: 160 80% 45%;               /* 强调色 - 生物绿 */
+    --accent-foreground: 0 0% 100%;      /* 强调文本 */
+
+    /* 状态色彩 */
+    --success: 140 70% 45%;              /* 成功绿 */
+    --warning: 35 100% 50%;              /* 警告橙 */
+    --error: 0 70% 55%;                  /* 错误红 */
+    --info: 210 100% 55%;                /* 信息蓝 */
+
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 210 20% 88%;               /* 边框色 */
+    --input: 210 20% 94%;                /* 输入框背景 */
+    --ring: 195 100% 40%;                /* 焦点环 */
+
+    /* 渐变色 */
+    --gradient-primary: linear-gradient(135deg, hsl(195 100% 40%), hsl(195 100% 50%));
+    --gradient-success: linear-gradient(135deg, hsl(140 70% 45%), hsl(160 80% 45%));
+    --gradient-warning: linear-gradient(135deg, hsl(35 100% 50%), hsl(25 100% 55%));
+    --gradient-error: linear-gradient(135deg, hsl(0 70% 55%), hsl(10 70% 60%));
+
+    /* 阴影效果 */
+    --shadow-card: 0 2px 10px hsl(210 20% 80% / 0.3);
+    --shadow-glow: 0 0 20px hsl(195 100% 40% / 0.2);
+    --shadow-success: 0 0 15px hsl(140 70% 45% / 0.3);
+    --shadow-warning: 0 0 15px hsl(35 100% 50% / 0.3);
+    --shadow-error: 0 0 15px hsl(0 70% 55% / 0.3);
+
+    /* 动画 */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.2s ease-out;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 195 100% 40%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 20% 96%;
+    --sidebar-accent-foreground: 240 10% 15%;
+    --sidebar-border: 210 20% 88%;
+    --sidebar-ring: 195 100% 40%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  }
+}
+
+/* 生物信息学平台专用组件样式 */
+@layer components {
+  /* 资源监控卡片 */
+  .resource-card {
+    @apply bg-card rounded-xl border border-border shadow-[var(--shadow-card)];
+    @apply transition-[var(--transition-smooth)] hover:shadow-[var(--shadow-glow)];
+  }
+
+  .resource-card.success {
+    @apply border-success/30 shadow-[var(--shadow-success)];
+  }
+
+  .resource-card.warning {
+    @apply border-warning/30 shadow-[var(--shadow-warning)];
+  }
+
+  .resource-card.error {
+    @apply border-error/30 shadow-[var(--shadow-error)];
+  }
+
+  /* 进度条样式 */
+  .progress-bar {
+    @apply h-2 rounded-full overflow-hidden bg-muted;
+  }
+
+  .progress-fill {
+    @apply h-full transition-[var(--transition-smooth)] rounded-full;
+  }
+
+  .progress-fill.success {
+    background: var(--gradient-success);
+  }
+
+  .progress-fill.warning {
+    background: var(--gradient-warning);
+  }
+
+  .progress-fill.error {
+    background: var(--gradient-error);
+  }
+
+  /* 任务状态指示器 */
+  .status-indicator {
+    @apply w-3 h-3 rounded-full inline-block;
+  }
+
+  .status-indicator.running {
+    @apply bg-primary animate-pulse;
+    box-shadow: 0 0 10px hsl(var(--primary) / 0.5);
+  }
+
+  .status-indicator.completed {
+    @apply bg-success;
+  }
+
+  .status-indicator.failed {
+    @apply bg-error;
+  }
+
+  .status-indicator.queued {
+    @apply bg-warning;
+  }
+
+  /* 导航菜单样式 */
+  .nav-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-lg transition-[var(--transition-fast)];
+    @apply hover:bg-secondary text-muted-foreground hover:text-foreground;
+  }
+
+  .nav-item.active {
+    @apply bg-primary text-primary-foreground shadow-[var(--shadow-glow)];
+  }
+
+  /* 数据表格样式 */
+  .data-table {
+    @apply w-full border-collapse border-spacing-0;
+  }
+
+  .data-table th {
+    @apply px-4 py-3 text-left text-sm font-medium text-muted-foreground;
+    @apply border-b border-border bg-muted/50;
+  }
+
+  .data-table td {
+    @apply px-4 py-3 text-sm border-b border-border;
+    @apply transition-[var(--transition-fast)] hover:bg-muted/50;
+  }
+
+  /* 流程图节点样式 */
+  .workflow-node {
+    @apply bg-card border border-border rounded-lg p-4 shadow-md;
+    @apply transition-[var(--transition-smooth)] hover:shadow-lg hover:border-primary/50;
+  }
+
+  .workflow-node.active {
+    @apply border-primary bg-primary/10 shadow-[var(--shadow-glow)];
+  }
+
+  .workflow-node.completed {
+    @apply border-success bg-success/10;
+  }
+
+  .workflow-node.error {
+    @apply border-error bg-error/10;
+  }
+
+  /* 按钮变体 */
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90;
+    @apply shadow-md hover:shadow-[var(--shadow-glow)] transition-[var(--transition-smooth)];
+  }
+
+  .btn-success {
+    @apply bg-success text-white hover:bg-success/90;
+    @apply shadow-md hover:shadow-[var(--shadow-success)] transition-[var(--transition-smooth)];
+  }
+
+  .btn-warning {
+    @apply bg-warning text-black hover:bg-warning/90;
+    @apply shadow-md hover:shadow-[var(--shadow-warning)] transition-[var(--transition-smooth)];
+  }
+
+  .btn-error {
+    @apply bg-error text-white hover:bg-error/90;
+    @apply shadow-md hover:shadow-[var(--shadow-error)] transition-[var(--transition-smooth)];
+  }
+}
