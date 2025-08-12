@@ -8,7 +8,6 @@ export type {
   IProject, 
   IDataFile, 
   ISample, 
-  IWorkflowRun,
   AuthenticatedRequest 
 } from './backend-types';
 
