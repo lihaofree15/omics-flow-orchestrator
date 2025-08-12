@@ -248,4 +248,53 @@
     @apply bg-error text-white hover:bg-error/90;
     @apply shadow-md hover:shadow-[var(--shadow-error)] transition-[var(--transition-smooth)];
   }
+
+  /* 下拉菜单和弹窗层级修复 */
+  .dropdown-content {
+    @apply z-[1000] !important;
+  }
+
+  .popover-content {
+    @apply z-[1000] !important;
+  }
+
+  .select-content {
+    @apply z-[1000] !important;
+  }
+
+  .command-dialog {
+    @apply z-[1001] !important;
+  }
+
+  .toast-viewport {
+    @apply z-[1002] !important;
+  }
+
+  /* 确保下拉选项可点击 */
+  [data-radix-collection-item] {
+    @apply cursor-pointer;
+  }
+
+  /* 修复选择器交互 */
+  [data-state="open"] {
+    @apply pointer-events-auto;
+  }
+
+  /* 修复命令面板样式 */
+  [cmdk-root] {
+    @apply max-h-[400px] overflow-hidden;
+  }
+
+  [cmdk-item] {
+    @apply cursor-pointer;
+  }
+
+  [cmdk-item][data-selected="true"] {
+    @apply bg-accent text-accent-foreground;
+  }
+
+  /* 确保弹窗内容可滚动 */
+  .scroll-area-viewport {
+    @apply overscroll-contain;
+  }
 }
